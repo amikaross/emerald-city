@@ -1,20 +1,29 @@
 import struct
 
 def encode(integer):
-  bit_string = bin(integer)[2:]
-  num_pads = 7 - (len(bit_string) % 7)
-  padded = bit_string.zfill(num_pads + len(bit_string))
-  split = [padded[i:i+7] for i in range(0, len(padded), 7)]
-  for i in range(len(split)):
-      if i != len(split) - 1:
-        split[i] = '0' + split[i] 
-      else: 
-         split[i] = '1' + split[i]
-  split.reverse()
-  ints = list(map(lambda x: int(x, 2), split))
-  return bytes(ints)
+  if integer == 0:
+    return b'\x00'
+  new_bits = []
+  while integer > 0:
+    current_byte = integer & 0x7f
+    integer >>= 7
+    if integer > 0: 
+      current_byte |= 0x80 
+    new_bits.append(current_byte)
+  return bytes(new_bits)
+
+# def decode(bytes):
+#   new_bits = []
+#   byte_array = bytearray(bytes)
+#   for byte in byte_array:
+#      new_bits.append(bin(byte & 0x7f))
+#   breakpoint()
+#   return int("".join(new_bits), 2)
+
 
 def decode(bytes):
+  if bytes == b'\x00':
+    return 0
   bits = []
   byte_array = bytearray(bytes)
   byte_array.reverse()
@@ -35,6 +44,10 @@ if __name__ == '__main__':
     assert encode(150) == b'\x96\x01'
     assert decode(b'\x96\x01') == 150 
 
-    # for n in range(1 << 30):
-    #   assert decode(encode(n)) == n
+    assert decode(encode(1)) == 1
+
+    for n in range(1 << 20):
+      if n % 1000000 == 0:
+        print(n)
+      assert decode(encode(n)) == n
     
